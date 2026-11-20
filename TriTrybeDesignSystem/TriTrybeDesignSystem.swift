@@ -36,7 +36,9 @@ struct Workout: Identifiable {
 struct TriCard<Content: View>: View {
     @ViewBuilder var content: Content
     var body: some View {
-        content
+        VStack(alignment: .leading, spacing: 12) {
+            content
+        }
             .padding(17)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.white, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
@@ -67,33 +69,34 @@ struct TriBrand: View {
 /// A reusable, asset-free hero while the final athlete artwork is prepared.
 struct TriWelcomeBanner: View {
     var body: some View {
-        ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(TriStyle.blue.gradient)
-            Circle()
-                .fill(TriStyle.green)
-                .frame(width: 135, height: 135)
-                .offset(x: 215, y: 58)
-            Circle()
-                .fill(TriStyle.red)
-                .frame(width: 100, height: 100)
-                .offset(x: 285, y: -48)
-            VStack(alignment: .leading, spacing: 9) {
-                Text("SWIM  ·  BIKE  ·  RUN")
-                    .font(.system(size: 12, weight: .heavy, design: .rounded))
-                    .tracking(1.1)
-                Text("Your journey.\nYour pace.")
-                    .font(TriStyle.title(29))
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Every start is worth celebrating!")
-                    .font(TriStyle.body(13))
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                if UIImage(named: "TriTrybeBanner") != nil {
+                    Image("TriTrybeBanner")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                        .accessibilityLabel("Cartoon swimmer, cyclist and runner. Your journey, your pace. Celebrate every workout.")
+                } else {
+                    RoundedRectangle(cornerRadius: 26)
+                        .fill(TriStyle.blue.gradient)
+                    VStack(alignment: .leading, spacing: 9) {
+                        Text("SWIM  ·  BIKE  ·  RUN")
+                            .font(.system(size: 12, weight: .heavy, design: .rounded))
+                        Text("Your journey.\nYour pace.")
+                            .font(TriStyle.title(29))
+                        Text("Celebrate every workout.")
+                            .font(TriStyle.body(13))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(23)
+                }
             }
-            .foregroundStyle(.white)
-            .padding(23)
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
         }
         .frame(height: 180)
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .accessibilityElement(children: .combine)
     }
 }
 
@@ -177,6 +180,7 @@ struct TriTrybeRootView: View {
 
 struct TriHomeView: View {
     let store: TriDemoStore
+    @Environment(\.horizontalSizeClass) private var sizeClass
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 17) {
@@ -186,6 +190,7 @@ struct TriHomeView: View {
                     .font(TriStyle.title(27)).foregroundStyle(TriStyle.navy)
                 Text("Every session gets you closer to race day.")
                     .foregroundStyle(TriStyle.muted)
+                VStack(alignment: .leading, spacing: 16) {
                 TriCard {
                     Label("YOUR RACE", systemImage: "flag.checkered")
                         .font(.caption.bold()).foregroundStyle(TriStyle.blue)
@@ -216,6 +221,8 @@ struct TriHomeView: View {
                     ForEach(store.workouts.prefix(3)) { workout in WorkoutRow(workout: workout) }
                 }
             }
+            .frame(maxWidth: sizeClass == .regular ? 850 : 620)
+            .frame(maxWidth: .infinity)
             .padding(18)
         }
         .background(TriStyle.canvas)
