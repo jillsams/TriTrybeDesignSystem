@@ -693,7 +693,7 @@ struct TriRaceSetupView: View {
 
     private var personalChoices: some View {
         VStack(alignment: .leading, spacing: 11) {
-            Text("Choose your athlete").font(TriStyle.body(16).weight(.bold))
+            Text("Choose your avatar").font(TriStyle.body(16).weight(.bold))
             Picker("Athlete", selection: $athlete) {
                 Text("Woman").tag("Female")
                 Text("Man").tag("Male")
