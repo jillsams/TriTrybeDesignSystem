@@ -68,35 +68,35 @@ struct TriBrand: View {
 
 /// A reusable, asset-free hero while the final athlete artwork is prepared.
 struct TriWelcomeBanner: View {
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    private var bannerName: String {
+        sizeClass == .compact ? "TriTrybeBannerPhone" : "TriTrybeBanner"
+    }
+
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                if UIImage(named: "TriTrybeBanner") != nil {
-                    Image("TriTrybeBanner")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: geometry.size.width, height: geometry.size.height)
-                        .clipped()
-                        .accessibilityLabel("Cartoon swimmer, cyclist and runner. Your journey, your pace. Celebrate every workout.")
-                } else {
-                    RoundedRectangle(cornerRadius: 26)
-                        .fill(TriStyle.blue.gradient)
-                    VStack(alignment: .leading, spacing: 9) {
-                        Text("SWIM  ·  BIKE  ·  RUN")
-                            .font(.system(size: 12, weight: .heavy, design: .rounded))
-                        Text("Your journey.\nYour pace.")
-                            .font(TriStyle.title(29))
-                        Text("Celebrate every workout.")
-                            .font(TriStyle.body(13))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(23)
+        Group {
+            if UIImage(named: bannerName) != nil {
+                Image(bannerName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                    .accessibilityLabel("Cartoon swimmer, cyclist and runner. Your journey, your pace. Celebrate every workout.")
+            } else {
+                VStack(alignment: .leading, spacing: 9) {
+                    Text("SWIM  ·  BIKE  ·  RUN")
+                        .font(.system(size: 12, weight: .heavy, design: .rounded))
+                    Text("Your journey.\\nYour pace.")
+                        .font(TriStyle.title(29))
+                    Text("Celebrate every workout.")
+                        .font(TriStyle.body(13))
                 }
+                .foregroundStyle(.white)
+                .padding(23)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(TriStyle.blue.gradient, in: RoundedRectangle(cornerRadius: 26))
             }
-            .frame(width: geometry.size.width, height: geometry.size.height)
-            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
         }
-        .frame(height: 180)
     }
 }
 
