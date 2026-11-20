@@ -540,6 +540,7 @@ enum RaceDiscipline: String, CaseIterable, Identifiable {
 struct TriRaceSetupView: View {
     let store: TriDemoStore
     let onSave: () -> Void
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var step = 0
     @State private var discipline: RaceDiscipline = .triathlon
     @State private var distance = "Sprint"
@@ -548,95 +549,191 @@ struct TriRaceSetupView: View {
     @State private var athlete = "Female"
     private let distances = ["Super Sprint", "Sprint", "Olympic", "T100", "Middle (70.3)", "Long (Ironman)"]
     private let weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Text("Set Up Your Race").font(TriStyle.title()).foregroundStyle(TriStyle.navy)
-                HStack(spacing: 6) {
-                    ForEach(0..<4, id: \.self) { i in
-                        Capsule().fill(i <= step ? TriStyle.blue : Color.gray.opacity(0.18))
-                            .frame(height: 7)
+                HStack(spacing: 14) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text("YOUR NEXT ADVENTURE")
+                            .font(.caption.bold()).tracking(2).foregroundStyle(TriStyle.blue)
+                        Text("Let's get race-ready!")
+                            .font(TriStyle.title(28)).foregroundStyle(TriStyle.navy)
+                        Text("Your race. Your schedule. Your pace.")
+                            .font(TriStyle.body(15)).foregroundStyle(TriStyle.muted)
                     }
+                    Spacer(minLength: 0)
+                    Image(sizeClass == .regular ? "TriTrybeBanner" : "TriTrybeBannerPhone")
+                        .resizable().scaledToFit()
+                        .frame(width: sizeClass == .regular ? 230 : 92)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .accessibilityLabel("Tri Trybe cartoon athletes")
                 }
-                Text(["What are you training for?", "Choose your race distance", "When is race day?", "Make it work for you"][step])
-                    .font(TriStyle.title(23)).foregroundStyle(TriStyle.navy)
-                if step == 0 {
-                    LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: 12) {
-                        ForEach(RaceDiscipline.allCases) { item in
-                            Button { discipline = item } label: {
-                                VStack(spacing: 11) {
-                                    HStack(spacing: 6) {
-                                        ForEach(item.sports) { sport in
-                                            Image(systemName: sport.symbol)
-                                                .font(.title3).foregroundStyle(sport.tint)
-                                        }
-                                    }
-                                    Text(item.rawValue).font(TriStyle.body(17).weight(.bold)).foregroundStyle(TriStyle.navy)
-                                }
-                                .frame(maxWidth: .infinity, minHeight: 95)
-                                .background(discipline == item ? TriStyle.blue.opacity(0.10) : .white,
-                                            in: RoundedRectangle(cornerRadius: 20))
-                                .overlay(RoundedRectangle(cornerRadius: 20)
-                                    .stroke(discipline == item ? TriStyle.blue : Color.gray.opacity(0.15), lineWidth: discipline == item ? 2.5 : 1))
-                            }.buttonStyle(.plain)
-                        }
-                    }
-                } else if step == 1 {
-                    ForEach(distances, id: \.self) { item in
-                        Button { distance = item } label: {
-                            HStack {
-                                Text(item).font(TriStyle.body(17).weight(.bold))
-                                Spacer()
-                                Image(systemName: distance == item ? "checkmark.circle.fill" : "circle")
+                if sizeClass == .regular {
+                    HStack(alignment: .top, spacing: 16) {
+                        VStack(spacing: 16) {
+                            TriCard { sectionTitle("1", "Your event"); eventChoices }
+                            TriCard { sectionTitle("2", "Race distance"); distanceChoices }
+                        }.frame(maxWidth: .infinity)
+                        VStack(spacing: 16) {
+                            TriCard {
+                                sectionTitle("3", "Race day")
+                                DatePicker("Race date", selection: $raceDate, in: Date.now..., displayedComponents: .date)
+                                    .datePickerStyle(.compact).tint(TriStyle.blue)
                             }
-                            .foregroundStyle(distance == item ? TriStyle.blue : TriStyle.navy)
-                            .padding(17)
-                            .background(.white, in: RoundedRectangle(cornerRadius: 16))
-                        }.buttonStyle(.plain)
+                            TriCard { sectionTitle("4", "Make it yours"); personalChoices }
+                        }.frame(maxWidth: .infinity)
                     }
-                } else if step == 2 {
-                    TriCard {
-                        DatePicker("Race day", selection: $raceDate, in: Date.now..., displayedComponents: .date)
-                            .datePickerStyle(.graphical).tint(TriStyle.blue)
-                    }
+                    saveButton
                 } else {
+                    HStack(spacing: 6) {
+                        ForEach(0..<4, id: \.self) { i in
+                            Capsule().fill(i <= step ? TriStyle.blue : Color.gray.opacity(0.2))
+                                .frame(height: 7)
+                        }
+                    }
+                    Text("Step \(step + 1) of 4")
+                        .font(TriStyle.body(15)).foregroundStyle(TriStyle.muted)
                     TriCard {
-                        Text("Choose your athlete").font(TriStyle.title(20)).foregroundStyle(TriStyle.navy)
-                        Picker("Character", selection: $athlete) {
-                            Text("Woman").tag("Female")
-                            Text("Man").tag("Male")
+                        if step == 0 {
+                            sectionTitle("1", "Choose your event")
+                            eventChoices
+                        } else if step == 1 {
+                            sectionTitle("2", "Choose your distance")
+                            distanceChoices
+                        } else if step == 2 {
+                            sectionTitle("3", "When is race day?")
+                            DatePicker("Race date", selection: $raceDate, in: Date.now..., displayedComponents: .date)
+                                .datePickerStyle(.graphical).tint(TriStyle.blue)
+                        } else {
+                            sectionTitle("4", "Make it yours")
+                            personalChoices
                         }
-                        .pickerStyle(.segmented)
-                        Text("Which days can you train?").font(TriStyle.title(20)).foregroundStyle(TriStyle.navy)
-                        Text("Pick the days that usually suit you. You can change them later.")
-                            .font(.subheadline).foregroundStyle(TriStyle.muted)
-                        ForEach(weekdays.indices, id: \.self) { i in
-                            Toggle(weekdays[i], isOn: Binding(
-                                get: { days.contains(i) },
-                                set: { on in if on { days.insert(i) } else { days.remove(i) } }
-                            )).tint(TriStyle.green)
+                    }
+                    HStack(spacing: 12) {
+                        if step > 0 {
+                            Button("Back") { step -= 1 }.buttonStyle(.bordered)
+                        }
+                        if step == 3 {
+                            saveButton
+                        } else {
+                            Button("Next") { step += 1 }
+                                .font(TriStyle.body(17).weight(.bold))
+                                .frame(maxWidth: .infinity)
+                                .buttonStyle(.borderedProminent)
                         }
                     }
                 }
-                HStack {
-                    if step > 0 {
-                        Button("Back") { step -= 1 }.buttonStyle(.bordered)
-                    }
-                    Button(step == 3 ? "Save My Race" : "Next") {
-                        if step < 3 { step += 1 } else {
-                            store.race = SavedRace(discipline: discipline.rawValue, distance: distance, date: raceDate, trainingDays: days.sorted(), athlete: athlete)
-                            onSave()
-                        }
-                    }
-                    .font(TriStyle.body(17).weight(.bold))
-                    .frame(maxWidth: .infinity).buttonStyle(.borderedProminent)
-                    .disabled(step == 3 && days.isEmpty)
-                }
-                .padding(.top, 12)
-            }.padding(18)
+            }
+            .frame(maxWidth: sizeClass == .regular ? 1050 : 620)
+            .frame(maxWidth: .infinity)
+            .padding(18)
         }
         .background(TriStyle.canvas)
+        .onAppear {
+            if let race = store.race {
+                discipline = RaceDiscipline(rawValue: race.discipline) ?? .triathlon
+                distance = race.distance
+                raceDate = race.date
+                days = Set(race.trainingDays)
+                athlete = race.athlete
+            }
+        }
+    }
 
+    private func sectionTitle(_ number: String, _ title: String) -> some View {
+        HStack(spacing: 9) {
+            Text(number).font(.caption.bold()).foregroundStyle(.white)
+                .frame(width: 26, height: 26).background(TriStyle.blue, in: Circle())
+            Text(title).font(TriStyle.title(20)).foregroundStyle(TriStyle.navy)
+        }
+    }
+
+    private var eventChoices: some View {
+        LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: 10) {
+            ForEach(RaceDiscipline.allCases) { item in
+                Button { discipline = item } label: {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 6) {
+                            ForEach(item.sports) { sport in
+                                Image(systemName: sport.symbol).foregroundStyle(sport.tint)
+                            }
+                        }.font(.title3)
+                        Text(item.rawValue).font(TriStyle.body(15).weight(.bold))
+                            .foregroundStyle(TriStyle.navy)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 75)
+                    .background(discipline == item ? TriStyle.blue.opacity(0.12) : TriStyle.canvas,
+                                in: RoundedRectangle(cornerRadius: 15))
+                    .overlay(RoundedRectangle(cornerRadius: 15)
+                        .stroke(discipline == item ? TriStyle.blue : Color.gray.opacity(0.12),
+                                lineWidth: discipline == item ? 2 : 1))
+                }.buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var distanceChoices: some View {
+        LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: 9) {
+            ForEach(distances, id: \.self) { item in
+                Button { distance = item } label: {
+                    HStack {
+                        Text(item).font(TriStyle.body(14).weight(.bold))
+                        Spacer(minLength: 0)
+                        Image(systemName: distance == item ? "checkmark.circle.fill" : "circle")
+                    }
+                    .foregroundStyle(distance == item ? TriStyle.blue : TriStyle.navy)
+                    .padding(10).frame(maxWidth: .infinity, minHeight: 54)
+                    .background(distance == item ? TriStyle.blue.opacity(0.10) : TriStyle.canvas,
+                                in: RoundedRectangle(cornerRadius: 13))
+                }.buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var personalChoices: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            Text("Choose your athlete").font(TriStyle.body(16).weight(.bold))
+            Picker("Athlete", selection: $athlete) {
+                Text("Woman").tag("Female")
+                Text("Man").tag("Male")
+            }.pickerStyle(.segmented)
+            Text("Which days can you train?").font(TriStyle.body(16).weight(.bold))
+            Text("Choose the days that usually suit you.")
+                .font(.footnote).foregroundStyle(TriStyle.muted)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: 7)) {
+                ForEach(weekdays.indices, id: \.self) { i in
+                    Button {
+                        if days.contains(i) { days.remove(i) } else { days.insert(i) }
+                    } label: {
+                        Text(String(weekdays[i].prefix(1)))
+                            .font(.caption.bold())
+                            .foregroundStyle(days.contains(i) ? .white : TriStyle.navy)
+                            .frame(maxWidth: .infinity).frame(height: 38)
+                            .background(days.contains(i) ? TriStyle.green : TriStyle.canvas,
+                                        in: RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(weekdays[i])
+                }
+            }
+            Text("\(days.count) training days selected")
+                .font(.footnote).foregroundStyle(days.isEmpty ? TriStyle.red : TriStyle.muted)
+        }
+    }
+
+    private var saveButton: some View {
+        Button {
+            store.race = SavedRace(discipline: discipline.rawValue, distance: distance,
+                                  date: raceDate, trainingDays: days.sorted(), athlete: athlete)
+            onSave()
+        } label: {
+            Label(store.race == nil ? "Create My Training Plan" : "Save Race Changes",
+                  systemImage: "checkmark.circle.fill")
+                .font(TriStyle.body(18).weight(.bold))
+                .frame(maxWidth: .infinity).padding(.vertical, 12)
+        }
+        .buttonStyle(.borderedProminent).tint(Color.orange).disabled(days.isEmpty)
     }
 }
 
