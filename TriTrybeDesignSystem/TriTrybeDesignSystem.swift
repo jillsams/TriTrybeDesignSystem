@@ -243,7 +243,7 @@ struct TriWelcomeView: View {
             ScrollView {
                 Group {
                     if sizeClass == .regular && geometry.size.width >= 700 {
-                        iPadWelcome
+                        iPadWelcome(availableWidth: min(geometry.size.width - 48, 1050))
                     } else {
                         iPhoneWelcome
                     }
@@ -276,43 +276,50 @@ struct TriWelcomeView: View {
         .padding(.vertical, 24)
     }
 
-    private var iPadWelcome: some View {
-        VStack(alignment: .leading, spacing: 32) {
-            TriBrand()
-            HStack(alignment: .center, spacing: 38) {
-                TriWelcomeBanner()
-                    .frame(maxWidth: .infinity)
-                    .layoutPriority(1)
+    private func iPadWelcome(availableWidth: CGFloat) -> some View {
+        let gap: CGFloat = 32
+        let leftWidth = (availableWidth - gap) * 0.52
+        let rightWidth = (availableWidth - gap) * 0.48
 
-                VStack(alignment: .leading, spacing: 21) {
+        return VStack(alignment: .leading, spacing: 28) {
+            TriBrand()
+            HStack(alignment: .center, spacing: gap) {
+                Image("TriTrybeBanner")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: leftWidth)
+                    .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                    .accessibilityLabel("Cartoon swimmer, cyclist and runner")
+
+                VStack(alignment: .leading, spacing: 19) {
                     Text("WELCOME TO TRI TRYBE")
                         .font(.caption.weight(.heavy))
                         .tracking(2)
                         .foregroundStyle(TriStyle.blue)
                     Text("Your journey. Your pace.")
-                        .font(TriStyle.title(34))
+                        .font(TriStyle.title(32))
                         .foregroundStyle(TriStyle.navy)
                         .fixedSize(horizontal: false, vertical: true)
                     Text("Create a training plan that fits your race, your experience and your life.")
-                        .font(TriStyle.body(18))
+                        .font(TriStyle.body(17))
                         .foregroundStyle(TriStyle.muted)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    VStack(alignment: .leading, spacing: 17) {
+                    VStack(alignment: .leading, spacing: 15) {
                         benefit("Plan for your race", icon: "calendar", tint: TriStyle.blue)
                         benefit("Train at your pace", icon: "figure.run", tint: TriStyle.green)
                         benefit("Celebrate your progress", icon: "trophy", tint: TriStyle.red)
                     }
-                    .padding(20)
+                    .padding(18)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white, in: RoundedRectangle(cornerRadius: 20))
 
                     planButton
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(width: rightWidth, alignment: .leading)
             }
         }
-        .padding(.vertical, 36)
+        .padding(.vertical, 30)
     }
 
     private func benefit(_ title: String, icon: String, tint: Color) -> some View {
