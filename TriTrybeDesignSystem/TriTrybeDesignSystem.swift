@@ -192,11 +192,9 @@ struct TriTrybeRootView: View {
         Group {
             if store.race == nil {
                 NavigationStack {
-                    TriWelcomeView {
+                    TriWelcomeView(startPlanning: {
                         selectedTab = 3
-                    } startPlanning: {
-                        selectedTab = 3
-                    }
+                    })
                 }
                 // The setup tab is presented in the same root to avoid losing its state.
                 .fullScreenCover(isPresented: Binding(
