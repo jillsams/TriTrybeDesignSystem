@@ -181,31 +181,44 @@ struct TriTrybeRootView: View {
 struct TriHomeView: View {
     let store: TriDemoStore
     @Environment(\.horizontalSizeClass) private var sizeClass
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 17) {
                 TriBrand().padding(.top, 12)
                 TriWelcomeBanner()
                 Text("You're doing great! 👋")
-                    .font(TriStyle.title(27)).foregroundStyle(TriStyle.navy)
+                    .font(TriStyle.title(27))
+                    .foregroundStyle(TriStyle.navy)
                 Text("Every session gets you closer to race day.")
                     .foregroundStyle(TriStyle.muted)
-                VStack(alignment: .leading, spacing: 16) {
+
                 TriCard {
                     Label("YOUR RACE", systemImage: "flag.checkered")
-                        .font(.caption.bold()).foregroundStyle(TriStyle.blue)
+                        .font(.caption.bold())
+                        .foregroundStyle(TriStyle.blue)
                     Text("Your first Sprint Triathlon")
-                        .font(TriStyle.title(22)).foregroundStyle(TriStyle.navy)
+                        .font(TriStyle.title(22))
+                        .foregroundStyle(TriStyle.navy)
                     Text("Your race countdown will appear here once you've chosen a date.")
-                        .font(.subheadline).foregroundStyle(TriStyle.muted)
+                        .font(.subheadline)
+                        .foregroundStyle(TriStyle.muted)
                 }
                 TriCard {
-                    Text("Your training journey").font(TriStyle.title(20)).foregroundStyle(TriStyle.navy)
-                    Text("Base phase · Building confidence").font(.subheadline).foregroundStyle(TriStyle.muted)
-                    ProgressView(value: 0.35).tint(TriStyle.green).padding(.vertical, 7)
+                    Text("Your training journey")
+                        .font(TriStyle.title(20))
+                        .foregroundStyle(TriStyle.navy)
+                    Text("Base phase · Building confidence")
+                        .font(.subheadline)
+                        .foregroundStyle(TriStyle.muted)
+                    ProgressView(value: 0.35)
+                        .tint(TriStyle.green)
+                        .padding(.vertical, 7)
                     HStack {
                         ForEach(["Base", "Build", "Peak", "Taper"], id: \.self) { phase in
-                            Text(phase).font(.caption.bold()).frame(maxWidth: .infinity)
+                            Text(phase)
+                                .font(.caption.bold())
+                                .frame(maxWidth: .infinity)
                                 .foregroundStyle(phase == "Base" ? TriStyle.green : TriStyle.muted)
                         }
                     }
@@ -215,10 +228,13 @@ struct TriHomeView: View {
                         Text("This week").font(TriStyle.title(21))
                         Spacer()
                         Text("\(store.completed) of \(store.workouts.count) done")
-                            .font(.subheadline.bold()).foregroundStyle(TriStyle.green)
+                            .font(.subheadline.bold())
+                            .foregroundStyle(TriStyle.green)
                     }
                     .foregroundStyle(TriStyle.navy)
-                    ForEach(store.workouts.prefix(3)) { workout in WorkoutRow(workout: workout) }
+                    ForEach(store.workouts.prefix(3)) { workout in
+                        WorkoutRow(workout: workout)
+                    }
                 }
             }
             .frame(maxWidth: sizeClass == .regular ? 850 : 620)
