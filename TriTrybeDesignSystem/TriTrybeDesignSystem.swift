@@ -321,7 +321,7 @@ struct TriHomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 17) {
                 TriBrand().padding(.top, 12)
-                TriWelcomeBanner()
+                TriCompletionBanner(completed: store.completed, total: store.workouts.count, athlete: store.race?.athlete ?? "Female")
                 Text("You're doing great! 👋")
                     .font(TriStyle.title(27))
                     .foregroundStyle(TriStyle.navy)
