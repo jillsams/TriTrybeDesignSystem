@@ -134,6 +134,16 @@ struct WorkoutRow: View {
     }
 }
 
+struct SavedRace: Codable {
+    var discipline: String
+    var distance: String
+    var date: Date
+    var trainingDays: [Int]
+    var athlete: String
+
+    var title: String { "\(distance) \(discipline)" }
+}
+
 @MainActor @Observable final class TriDemoStore {
     var workouts: [Workout] = [
         .init(day: "Mon", sport: .swim, name: "Easy Swim", minutes: 30, detail: "Comfortable pace", complete: true),
@@ -142,6 +152,24 @@ struct WorkoutRow: View {
         .init(day: "Sat", sport: .bike, name: "Weekend Ride", minutes: 60, detail: "Enjoy the ride"),
         .init(day: "Sun", sport: .swim, name: "Swim Skills", minutes: 25, detail: "Build confidence")
     ]
+    var race: SavedRace? = nil {
+        didSet { persistRace() }
+    }
+
+    init() {
+        if let data = UserDefaults.standard.data(forKey: "triTrybeRace"),
+           let saved = try? JSONDecoder().decode(SavedRace.self, from: data) {
+            race = saved
+        }
+    }
+
+    private func persistRace() {
+        if let race, let data = try? JSONEncoder().encode(race) {
+            UserDefaults.standard.set(data, forKey: "triTrybeRace")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "triTrybeRace")
+        }
+    }
     var showCelebration = false
     var lastCelebrated: Sport = .swim
     func toggle(_ id: UUID) {
@@ -158,22 +186,131 @@ struct WorkoutRow: View {
 
 struct TriTrybeRootView: View {
     @State private var store = TriDemoStore()
+    @State private var selectedTab = 0
+
     var body: some View {
-        TabView {
-            NavigationStack { TriHomeView(store: store) }
-                .tabItem { Label("Home", systemImage: "house.fill") }
-            NavigationStack { TriPlanView(store: store) }
-                .tabItem { Label("Plan", systemImage: "calendar") }
-            NavigationStack { TriProgressView(store: store) }
-                .tabItem { Label("Progress", systemImage: "chart.bar.fill") }
-            NavigationStack { TriRaceSetupView() }
-                .tabItem { Label("Race", systemImage: "flag.checkered") }
+        Group {
+            if store.race == nil {
+                NavigationStack {
+                    TriWelcomeView {
+                        selectedTab = 3
+                    } startPlanning: {
+                        selectedTab = 3
+                    }
+                }
+                // The setup tab is presented in the same root to avoid losing its state.
+                .fullScreenCover(isPresented: Binding(
+                    get: { selectedTab == 3 },
+                    set: { if !$0 { selectedTab = 0 } }
+                )) {
+                    NavigationStack {
+                        TriRaceSetupView(store: store) {
+                            selectedTab = 0
+                        }
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Close") { selectedTab = 0 }
+                            }
+                        }
+                    }
+                }
+            } else {
+                TabView(selection: $selectedTab) {
+                    NavigationStack { TriHomeView(store: store) }
+                        .tabItem { Label("Home", systemImage: "house.fill") }.tag(0)
+                    NavigationStack { TriPlanView(store: store) }
+                        .tabItem { Label("Plan", systemImage: "calendar") }.tag(1)
+                    NavigationStack { TriProgressView(store: store) }
+                        .tabItem { Label("Progress", systemImage: "chart.bar.fill") }.tag(2)
+                    NavigationStack { TriRaceSetupView(store: store) { selectedTab = 0 } }
+                        .tabItem { Label("Race", systemImage: "flag.checkered") }.tag(3)
+                }
+                .tint(TriStyle.blue)
+            }
         }
-        .tint(TriStyle.blue)
         .alert("Your first \(store.lastCelebrated.rawValue.lowercased())! 🎉", isPresented: $store.showCelebration) {
             Button("Keep going!") { }
         } message: {
             Text("You showed up and gave it a go. That's worth celebrating!")
+        }
+    }
+}
+
+struct TriWelcomeView: View {
+    let startPlanning: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 22) {
+                TriBrand()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                TriWelcomeBanner()
+                Text("Welcome to Tri Trybe!")
+                    .font(TriStyle.title(29))
+                    .foregroundStyle(TriStyle.navy)
+                    .multilineTextAlignment(.center)
+                Text("Plan, train and celebrate every step of your triathlon journey.")
+                    .font(TriStyle.body(17))
+                    .foregroundStyle(TriStyle.muted)
+                    .multilineTextAlignment(.center)
+                Button(action: startPlanning) {
+                    Label("Create My Training Plan", systemImage: "calendar.badge.plus")
+                        .font(TriStyle.title(20))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 15)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.orange)
+                .padding(.top, 10)
+            }
+            .frame(maxWidth: 650)
+            .frame(maxWidth: .infinity)
+            .padding(20)
+        }
+        .background(TriStyle.canvas)
+    }
+}
+
+struct TriCompletionBanner: View {
+    let completed: Int
+    let total: Int
+    let athlete: String
+
+    private var fraction: Double {
+        total > 0 ? Double(completed) / Double(total) : 0
+    }
+
+    var body: some View {
+        TriCard {
+            Text("Training completed")
+                .font(TriStyle.title(21))
+                .foregroundStyle(TriStyle.navy)
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle().stroke(Color.gray.opacity(0.18), lineWidth: 13)
+                    Circle()
+                        .trim(from: 0, to: fraction)
+                        .stroke(TriStyle.green.gradient, style: StrokeStyle(lineWidth: 13, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    Text("\(Int(fraction * 100))%")
+                        .font(TriStyle.title(26))
+                        .foregroundStyle(TriStyle.navy)
+                }
+                .frame(width: 105, height: 105)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(completed) of \(total)")
+                        .font(TriStyle.title(20))
+                    Text("sessions")
+                        .font(TriStyle.body(15))
+                }
+                .foregroundStyle(TriStyle.navy)
+                Spacer(minLength: 0)
+                Image(systemName: athlete == "Male" ? "figure.run" : "figure.run")
+                    .font(.system(size: 48, weight: .bold))
+                    .foregroundStyle(TriStyle.green)
+                    .frame(width: 62)
+                    .accessibilityLabel("\(athlete) athlete celebrating")
+            }
         }
     }
 }
@@ -197,7 +334,7 @@ struct TriHomeView: View {
                     Label("YOUR RACE", systemImage: "flag.checkered")
                         .font(.caption.bold())
                         .foregroundStyle(TriStyle.blue)
-                    Text("Your first Sprint Triathlon")
+                    Text(store.race?.title ?? "Your race")
                         .font(TriStyle.title(22))
                         .foregroundStyle(TriStyle.navy)
                     Text("Your race countdown will appear here once you've chosen a date.")
@@ -325,12 +462,14 @@ enum RaceDiscipline: String, CaseIterable, Identifiable {
 }
 
 struct TriRaceSetupView: View {
+    let store: TriDemoStore
+    let onSave: () -> Void
     @State private var step = 0
     @State private var discipline: RaceDiscipline = .triathlon
     @State private var distance = "Sprint"
     @State private var raceDate = Calendar.current.date(byAdding: .month, value: 4, to: .now) ?? .now
     @State private var days: Set<Int> = [1, 2, 4, 6]
-    @State private var showConfirmation = false
+    @State private var athlete = "Female"
     private let distances = ["Super Sprint", "Sprint", "Olympic", "T100", "Middle (70.3)", "Long (Ironman)"]
     private let weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     var body: some View {
@@ -386,6 +525,12 @@ struct TriRaceSetupView: View {
                     }
                 } else {
                     TriCard {
+                        Text("Choose your athlete").font(TriStyle.title(20)).foregroundStyle(TriStyle.navy)
+                        Picker("Character", selection: $athlete) {
+                            Text("Woman").tag("Female")
+                            Text("Man").tag("Male")
+                        }
+                        .pickerStyle(.segmented)
                         Text("Which days can you train?").font(TriStyle.title(20)).foregroundStyle(TriStyle.navy)
                         Text("Pick the days that usually suit you. You can change them later.")
                             .font(.subheadline).foregroundStyle(TriStyle.muted)
@@ -402,7 +547,10 @@ struct TriRaceSetupView: View {
                         Button("Back") { step -= 1 }.buttonStyle(.bordered)
                     }
                     Button(step == 3 ? "Save My Race" : "Next") {
-                        if step < 3 { step += 1 } else { showConfirmation = true }
+                        if step < 3 { step += 1 } else {
+                            store.race = SavedRace(discipline: discipline.rawValue, distance: distance, date: raceDate, trainingDays: days.sorted(), athlete: athlete)
+                            onSave()
+                        }
                     }
                     .font(TriStyle.body(17).weight(.bold))
                     .frame(maxWidth: .infinity).buttonStyle(.borderedProminent)
@@ -412,11 +560,7 @@ struct TriRaceSetupView: View {
             }.padding(18)
         }
         .background(TriStyle.canvas)
-        .alert("Race setup saved in this preview! 🎉", isPresented: $showConfirmation) {
-            Button("Great!") { }
-        } message: {
-            Text("You've chosen \(discipline.rawValue), \(distance). Next we'll connect this setup to your real training-plan generator.")
-        }
+
     }
 }
 
