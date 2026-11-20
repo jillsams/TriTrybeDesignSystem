@@ -55,12 +55,45 @@ struct TriBrand: View {
                 }
             }.frame(width: 40)
             Text("Tri Trybe")
-                // Once Allo is bundled, change to .custom("Allo-Bold", size: 29).
+                // SF Rounded fallback until the licensed Allo font is bundled.
                 .font(TriStyle.title(29))
                 .foregroundStyle(TriStyle.navy)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Tri Trybe")
+    }
+}
+
+/// A reusable, asset-free hero while the final athlete artwork is prepared.
+struct TriWelcomeBanner: View {
+    var body: some View {
+        ZStack(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(TriStyle.blue.gradient)
+            Circle()
+                .fill(TriStyle.green)
+                .frame(width: 135, height: 135)
+                .offset(x: 215, y: 58)
+            Circle()
+                .fill(TriStyle.red)
+                .frame(width: 100, height: 100)
+                .offset(x: 285, y: -48)
+            VStack(alignment: .leading, spacing: 9) {
+                Text("SWIM  ·  BIKE  ·  RUN")
+                    .font(.system(size: 12, weight: .heavy, design: .rounded))
+                    .tracking(1.1)
+                Text("Your journey.\nYour pace.")
+                    .font(TriStyle.title(29))
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Every start is worth celebrating!")
+                    .font(TriStyle.body(13))
+            }
+            .foregroundStyle(.white)
+            .padding(23)
+        }
+        .frame(height: 180)
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -148,6 +181,7 @@ struct TriHomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 17) {
                 TriBrand().padding(.top, 12)
+                TriWelcomeBanner()
                 Text("You're doing great! 👋")
                     .font(TriStyle.title(27)).foregroundStyle(TriStyle.navy)
                 Text("Every session gets you closer to race day.")
