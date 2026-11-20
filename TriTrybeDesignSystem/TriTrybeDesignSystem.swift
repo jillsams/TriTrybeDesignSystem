@@ -236,36 +236,107 @@ struct TriTrybeRootView: View {
 
 struct TriWelcomeView: View {
     let startPlanning: () -> Void
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 22) {
-                TriBrand()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                TriWelcomeBanner()
-                Text("Welcome to Tri Trybe!")
-                    .font(TriStyle.title(29))
-                    .foregroundStyle(TriStyle.navy)
-                    .multilineTextAlignment(.center)
-                Text("Plan, train and celebrate every step of your triathlon journey.")
-                    .font(TriStyle.body(17))
-                    .foregroundStyle(TriStyle.muted)
-                    .multilineTextAlignment(.center)
-                Button(action: startPlanning) {
-                    Label("Create My Training Plan", systemImage: "calendar.badge.plus")
-                        .font(TriStyle.title(20))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 15)
+        GeometryReader { geometry in
+            ScrollView {
+                Group {
+                    if sizeClass == .regular && geometry.size.width >= 700 {
+                        iPadWelcome
+                    } else {
+                        iPhoneWelcome
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.orange)
-                .padding(.top, 10)
+                .frame(maxWidth: 1050)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: geometry.size.height, alignment: .center)
+                .padding(.horizontal, 24)
             }
-            .frame(maxWidth: 650)
-            .frame(maxWidth: .infinity)
-            .padding(20)
+            .background(TriStyle.canvas)
         }
-        .background(TriStyle.canvas)
+    }
+
+    private var iPhoneWelcome: some View {
+        VStack(spacing: 22) {
+            TriBrand()
+                .frame(maxWidth: .infinity, alignment: .leading)
+            TriWelcomeBanner()
+            Text("Welcome to Tri Trybe!")
+                .font(TriStyle.title(29))
+                .foregroundStyle(TriStyle.navy)
+                .multilineTextAlignment(.center)
+            Text("Plan, train and celebrate every step of your triathlon journey.")
+                .font(TriStyle.body(17))
+                .foregroundStyle(TriStyle.muted)
+                .multilineTextAlignment(.center)
+            planButton
+        }
+        .frame(maxWidth: 650)
+        .padding(.vertical, 24)
+    }
+
+    private var iPadWelcome: some View {
+        VStack(alignment: .leading, spacing: 32) {
+            TriBrand()
+            HStack(alignment: .center, spacing: 38) {
+                TriWelcomeBanner()
+                    .frame(maxWidth: .infinity)
+                    .layoutPriority(1)
+
+                VStack(alignment: .leading, spacing: 21) {
+                    Text("WELCOME TO TRI TRYBE")
+                        .font(.caption.weight(.heavy))
+                        .tracking(2)
+                        .foregroundStyle(TriStyle.blue)
+                    Text("Your journey. Your pace.")
+                        .font(TriStyle.title(34))
+                        .foregroundStyle(TriStyle.navy)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Create a training plan that fits your race, your experience and your life.")
+                        .font(TriStyle.body(18))
+                        .foregroundStyle(TriStyle.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    VStack(alignment: .leading, spacing: 17) {
+                        benefit("Plan for your race", icon: "calendar", tint: TriStyle.blue)
+                        benefit("Train at your pace", icon: "figure.run", tint: TriStyle.green)
+                        benefit("Celebrate your progress", icon: "trophy", tint: TriStyle.red)
+                    }
+                    .padding(20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 20))
+
+                    planButton
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(.vertical, 36)
+    }
+
+    private func benefit(_ title: String, icon: String, tint: Color) -> some View {
+        HStack(spacing: 13) {
+            Image(systemName: icon)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(tint)
+                .frame(width: 30)
+            Text(title)
+                .font(TriStyle.body(17))
+                .foregroundStyle(TriStyle.navy)
+        }
+    }
+
+    private var planButton: some View {
+        Button(action: startPlanning) {
+            Label("Create My Training Plan", systemImage: "calendar.badge.plus")
+                .font(TriStyle.title(19))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 15)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(Color.orange)
+        .accessibilityHint("Start setting up your race and training days")
     }
 }
 
